@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 # side-by-side comparison of state (2022-32) and national (2024-34) growth
 # (spec Section 8 / limitation 2). The openings rename carries the caveat into the header.
 DISPLAY_RENAME = {
+    "awards": "awards_conferred_2022_23",
     "nat_growth_pct": "nat_growth_pct_2024_34",
     "wtd_growth_pct_national": "wtd_growth_pct_national_2024_34",
     "dc_change_pct": "dc_change_pct_2022_32",

@@ -47,6 +47,13 @@ def _cache(df: pd.DataFrame, name: str) -> pd.DataFrame:
     return df
 
 
+def _file_date(path) -> str:
+    path = config.PROJECT_ROOT / path if not hasattr(path, "exists") else path
+    if not path.exists():
+        return "not available"
+    return dt.datetime.fromtimestamp(path.stat().st_mtime).date().isoformat()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -116,13 +123,52 @@ def main():
             "IPEDS Completions",
             f"{config.IPEDS_COMPLETIONS_FILE} (Final 2023-24 collection; degrees conferred Jul 2022-Jun 2023)",
         ),
+        ("IPEDS Completions URL", config.IPEDS_COMPLETIONS_URL),
+        (
+            "IPEDS Completions download date",
+            _file_date(config.RAW_DIR / f"{config.IPEDS_COMPLETIONS_FILE}.zip"),
+        ),
         ("CIP-SOC crosswalk", "CIP2020_SOC2018 (NCES)"),
+        ("CIP-SOC crosswalk URL", config.CROSSWALK_URL),
+        (
+            "CIP-SOC crosswalk download date",
+            _file_date(config.RAW_DIR / "CIP2020_SOC2018_Crosswalk.xlsx"),
+        ),
         (
             "OEWS",
             "May 2025 reference period (released May 2026); national + DC MSA 47900",
         ),
+        ("OEWS national URL", config.OEWS_NATIONAL_URL),
+        (
+            "OEWS national download date",
+            _file_date(config.RAW_DIR / config.OEWS_NATIONAL_ZIP),
+        ),
+        ("OEWS metro URL", config.OEWS_METRO_URL),
+        (
+            "OEWS metro download date",
+            _file_date(config.RAW_DIR / config.OEWS_METRO_ZIP),
+        ),
         ("National projections", "BLS Employment Projections 2024-34"),
+        ("National projections URL", config.PROJECTIONS_URL),
+        (
+            "National projections download date",
+            _file_date(config.RAW_DIR / "ep_occupation_2024_34.xlsx"),
+        ),
         ("State projections", state_note),
+        ("State projections landing page", config.STATE_PROJECTIONS_URL),
+        (
+            "State projections CSV endpoint",
+            config.STATE_PROJECTIONS_CSV_ENDPOINT,
+        ),
+        (
+            "State projections download date",
+            _file_date(
+                config.RAW_DIR
+                / f"projections_central_longterm_{dt.date.today()}.csv"
+            )
+            if not state.empty
+            else "not included in this run",
+        ),
         (
             "Governance",
             "All sources public, aggregate, non-PII government data; no FERPA exposure.",

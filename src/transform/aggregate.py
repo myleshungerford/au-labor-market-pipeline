@@ -58,9 +58,12 @@ def _summarize_group(g: pd.DataFrame) -> pd.Series:
 
 
 def build_summary(detail: pd.DataFrame) -> pd.DataFrame:
-    # pandas 3.0 excludes the grouping column from the applied frame by default
-    # and removed the include_groups kwarg, so do not pass it.
-    summary = detail.groupby("cip", sort=True).apply(_summarize_group).reset_index()
+    rows = []
+    for cip, group in detail.groupby("cip", sort=True):
+        row = _summarize_group(group)
+        row["cip"] = cip
+        rows.append(row)
+    summary = pd.DataFrame(rows)
     ordered = [
         "cip",
         "program_name",

@@ -36,6 +36,7 @@ def test_summary_labels_vintages_and_openings_caveat(tmp_path):
         {
             "cip": ["11.0701"],
             "program_name": ["CS"],
+            "awards": [42],
             "wtd_growth_pct_national": [13.0],
             "total_annual_openings": [550.0],
         }
@@ -43,6 +44,7 @@ def test_summary_labels_vintages_and_openings_caveat(tmp_path):
     detail = pd.DataFrame(
         {
             "cip": ["11.0701"],
+            "awards": [42],
             "soc": ["15-1252"],
             "nat_growth_pct": [13.3],
             "dc_change_pct": [10.0],
@@ -56,8 +58,10 @@ def test_summary_labels_vintages_and_openings_caveat(tmp_path):
     summ_headers = [c.value for c in wb["Summary"][1]]
     assert "wtd_growth_pct_national_2024_34" in summ_headers
     assert "total_annual_openings_addressable" in summ_headers
+    assert "awards_conferred_2022_23" in summ_headers
     det_headers = [c.value for c in wb["Detail"][1]]
     assert "nat_growth_pct_2024_34" in det_headers
     assert "dc_change_pct_2022_32" in det_headers
+    assert "awards_conferred_2022_23" in det_headers
     summ_cells = [c.value for row in wb["Summary"].iter_rows() for c in row if c.value]
     assert any("addressable-opportunity indicator" in str(v) for v in summ_cells)
