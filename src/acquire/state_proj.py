@@ -120,15 +120,15 @@ def _resolve_csv_url() -> str:
     return url
 
 
-def get_state_projections() -> pd.DataFrame:
+def get_state_projections(force: bool = False) -> pd.DataFrame:
     """Download the Projections Central bulk long-term CSV (all states), archive it
     date-stamped, run hard-fail guardrails, and return the DC/MD/VA pivot.
 
     Network/availability failures raise requests exceptions (run.py degrades to empty
     columns). Guardrail failures raise ValueError and intentionally abort the build."""
     dated = config.RAW_DIR / f"projections_central_longterm_{dt.date.today()}.csv"
-    if not dated.exists():
-        download(_resolve_csv_url(), dated)
+    if force or not dated.exists():
+        download(_resolve_csv_url(), dated, force=force)
     raw = pd.read_csv(dated, dtype=str)
     check_guardrails(raw)
     return parse_state_projections(dated)

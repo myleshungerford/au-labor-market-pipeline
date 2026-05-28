@@ -105,13 +105,14 @@ def _extract_member(zip_path, *, prefer: str) -> Path:
     return target
 
 
-def get_oews_national() -> pd.DataFrame:
+def get_oews_national(force: bool = False) -> pd.DataFrame:
     z = config.RAW_DIR / config.OEWS_NATIONAL_ZIP
-    download(config.OEWS_NATIONAL_URL, z)
-    return parse_oews(_extract_member(z, prefer="nat"), is_metro=False)
+    download(config.OEWS_NATIONAL_URL, z, force=force)
+    # "national" (not "nat") so we never match the 4-digit aggregate file nat4d_*.
+    return parse_oews(_extract_member(z, prefer="national"), is_metro=False)
 
 
-def get_oews_metro() -> pd.DataFrame:
+def get_oews_metro(force: bool = False) -> pd.DataFrame:
     z = config.RAW_DIR / config.OEWS_METRO_ZIP
-    download(config.OEWS_METRO_URL, z)
+    download(config.OEWS_METRO_URL, z, force=force)
     return parse_oews(_extract_member(z, prefer="MSA"), is_metro=True)

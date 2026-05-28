@@ -54,7 +54,7 @@ def parse_crosswalk(xlsx_path) -> pd.DataFrame:
     return df.dropna(subset=["cip"]).drop_duplicates().reset_index(drop=True)
 
 
-def get_crosswalk() -> pd.DataFrame:
+def get_crosswalk(force: bool = False) -> pd.DataFrame:
     dest = config.RAW_DIR / "CIP2020_SOC2018_Crosswalk.xlsx"
-    download(config.CROSSWALK_URL, dest)
+    download(config.CROSSWALK_URL, dest, force=force)
     return parse_crosswalk(dest)

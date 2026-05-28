@@ -19,6 +19,25 @@ def test_extract_member_picks_msa_not_bos(tmp_path, monkeypatch):
     assert oews._extract_member(zpath, prefer="MSA").name == "MSA_M2025_dl.xlsx"
 
 
+def test_extract_member_national_prefers_detailed_not_4digit(tmp_path, monkeypatch):
+    # nat4d (4-digit SOC aggregates) is listed FIRST; prefer="national" must skip it.
+    monkeypatch.setattr(oews.config, "RAW_DIR", tmp_path)
+    members = (
+        "nat4d_M2025_dl.xlsx",
+        "national_M2025_dl.xlsx",
+        "field_descriptions.xlsx",
+    )
+    for nm in members:
+        pd.DataFrame({"AREA": ["x"]}).to_excel(tmp_path / nm, index=False)
+    zpath = tmp_path / "oesm25nat.zip"
+    with zipfile.ZipFile(zpath, "w") as zf:
+        for nm in members:
+            zf.write(tmp_path / nm, arcname=f"oesm25nat/{nm}")
+    assert (
+        oews._extract_member(zpath, prefer="national").name == "national_M2025_dl.xlsx"
+    )
+
+
 def test_to_num_handles_suppression():
     assert _to_num("48,500") == 48500.0
     assert pd.isna(_to_num("*"))

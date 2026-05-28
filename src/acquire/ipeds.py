@@ -34,9 +34,9 @@ def parse_completions(csv_path) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-def get_completions() -> pd.DataFrame:
+def get_completions(force: bool = False) -> pd.DataFrame:
     dest = config.RAW_DIR / f"{config.IPEDS_COMPLETIONS_FILE}.zip"
-    download(config.IPEDS_COMPLETIONS_URL, dest)
+    download(config.IPEDS_COMPLETIONS_URL, dest, force=force)
     with zipfile.ZipFile(dest) as zf:
         names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
         if not names:

@@ -55,16 +55,18 @@ def main():
     args = ap.parse_args()
     _setup_logging()
 
-    cw = _cache(crosswalk.get_crosswalk(), "crosswalk")
-    comp = _cache(ipeds.get_completions(), "completions")
-    nat = _cache(oews.get_oews_national(), "oews_national")
-    metro = _cache(oews.get_oews_metro(), "oews_metro")
-    proj = _cache(projections.get_projections(), "projections")
+    cw = _cache(crosswalk.get_crosswalk(force=args.force), "crosswalk")
+    comp = _cache(ipeds.get_completions(force=args.force), "completions")
+    nat = _cache(oews.get_oews_national(force=args.force), "oews_national")
+    metro = _cache(oews.get_oews_metro(force=args.force), "oews_metro")
+    proj = _cache(projections.get_projections(force=args.force), "projections")
     # State DC/MD/VA growth is a documented proxy (spec limitation 2), not a core source.
     # If its file is not present, degrade loudly to empty state columns rather than aborting
     # the whole deliverable (national + metro remain fully populated).
     try:
-        state = _cache(state_proj.get_state_projections(), "state_projections")
+        state = _cache(
+            state_proj.get_state_projections(force=args.force), "state_projections"
+        )
     except (FileNotFoundError, requests.exceptions.RequestException) as exc:
         # Source unreachable -> degrade loudly. (Guardrail ValueErrors are NOT caught here;
         # a coverage/vintage shift hard-fails the build by design.)

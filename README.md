@@ -14,11 +14,23 @@ pip install pip-audit && pip-audit
 
 ## Run
 ```
-python -m src.run
-python -m src.run --force
+python -m src.run            # downloads + caches all sources to raw/, then builds the workbook
+python -m src.run --force    # re-download everything, ignoring the raw/ cache
 ```
-Two sources need a one-time manual placement in `raw/` (see spec Section 13):
-`ep_occupation_2024_34.xlsx` (BLS EP 2024-34) and `projections_central_longterm.csv`.
-The pipeline fails loud with the exact expected path if either is missing.
+All six sources download automatically (IPEDS Completions, the CIP-SOC crosswalk, OEWS national
+and DC-metro wages, BLS 2024-34 projections, and DC/MD/VA state projections). Downloads are cached
+in `raw/` so re-runs are fast; `--force` refreshes them.
 
 Output: `output/au_labor_market_<date>.xlsx` (Summary / Detail / Crosswalk Reference / Methodology).
+
+## Notes on data sources
+- National + DC-metro figures (wages, employment, national growth and openings) are the
+  load-bearing data, drawn from BLS OEWS and Employment Projections and IPEDS.
+- The DC/MD/VA state growth columns are a best-effort regional proxy pulled from Projections
+  Central's bulk file endpoint, which is an undocumented public endpoint and could change without
+  notice. If it is unreachable the pipeline logs a warning and leaves the state columns blank; the
+  national and metro figures are unaffected. The build hard-fails only if the source returns data
+  whose per-state row counts or projection vintage no longer match the expected values (a guard
+  against silently ingesting a shifted dataset).
+- Exact data vintages and limitations are recorded on the workbook's Methodology sheet and in
+  `docs/superpowers/specs/2026-05-28-au-labor-market-design.md`.

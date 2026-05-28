@@ -96,7 +96,7 @@ def parse_projections(path) -> pd.DataFrame:
     return out.drop_duplicates(subset=["soc"]).reset_index(drop=True)
 
 
-def get_projections() -> pd.DataFrame:
-    dest = config.RAW_DIR / "occupation.xlsx"
-    download(config.PROJECTIONS_URL, dest)
+def get_projections(force: bool = False) -> pd.DataFrame:
+    dest = config.RAW_DIR / "ep_occupation_2024_34.xlsx"
+    download(config.PROJECTIONS_URL, dest, force=force)
     return parse_projections(dest)

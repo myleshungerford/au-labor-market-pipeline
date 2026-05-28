@@ -225,3 +225,24 @@ confirmed when the files are actually downloaded:
 - That the pinned files (`C2023_A`, `oesm25nat.zip`, `oesm25ma.zip`) download successfully; abort loud if not.
 - The IPEDS Completions field names in `C2023_A` (`MAJORNUM`, `CTOTALT`, `AWLEVEL`); the standard
   values were confirmed in review but should be asserted against the real header.
+
+## 14. As-built notes (resolved during integration, 2026-05-28)
+
+All six sources download automatically; none require manual file placement. The Section 13 items
+were resolved against the real files as follows:
+
+- **Crosswalk:** the NCES workbook has multiple sheets. The parser reads the `CIP-SOC` sheet (matched
+  pairs) plus `Unmatched CIP Codes` (SOC `99-9999` / "NO MATCH" treated as no-match).
+- **OEWS:** group column is `O_GROUP`; suppression markers `*`/`#`/blank become null. The national zip
+  bundles a 4-digit aggregate file, so the detailed file is selected by the token `national`; the metro
+  zip bundles BOS/MSA files, so the `MSA` member is selected and filtered to area `47900`.
+- **National projections:** the file is `bls.gov/emp/ind-occ-matrix/occupation.xlsx`, sheet `Table 1.2`,
+  with a title row above the header. Detailed rows are kept by `Occupation type == "Line item"`.
+  Employment and openings are reported in thousands and converted to actual counts.
+- **State projections:** automated via the Projections Central bulk file endpoint
+  (`public.projectionscentral.org/projections/file/longterm/csv`, which returns a short-lived presigned
+  CSV URL covering all states, 2022-32). The pipeline filters DC/MD/VA, archives each pull date-stamped,
+  and hard-fails if per-state row counts (442/749/741) or the 2022-32 vintage shift. It degrades to blank
+  state columns only if the (undocumented) endpoint is unreachable. The per-state paginated JSON endpoint
+  is deliberately avoided: it silently drops about 100 occupations per state.
+- **IPEDS:** `UNITID`, `CIPCODE`, `AWLEVEL`, `MAJORNUM`, `CTOTALT` confirmed in `C2023_A`.
