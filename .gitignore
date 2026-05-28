@@ -13,6 +13,9 @@ processed/
 logs/
 output/
 
+# Local session notes (e.g. goodnight handoffs); not part of the public deliverable
+handoffs/
+
 # OS / editor cruft
 Thumbs.db
 .DS_Store
