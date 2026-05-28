@@ -290,7 +290,9 @@ def test_normalize_cip_pads_and_formats():
 
 
 def test_normalize_cip_handles_missing():
-    assert normalize_cip(None) is pd.NA or normalize_cip(None) != normalize_cip(None)
+    assert normalize_cip(None) is pd.NA
+    assert normalize_cip("") is pd.NA
+    assert normalize_cip("nan") is pd.NA
 
 
 def test_normalize_soc_strips_and_uppercases():
@@ -310,8 +312,8 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'src.codes'`
 import pandas as pd
 
 
-def normalize_cip(value) -> str:
-    """Return a CIP code as 'NN.NNNN'. NA-safe."""
+def normalize_cip(value):
+    """Return a CIP code as 'NN.NNNN' string, or pd.NA if missing."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return pd.NA
     s = str(value).strip()
@@ -323,8 +325,8 @@ def normalize_cip(value) -> str:
     return f"{int(left):02d}.{right[:4].ljust(4, '0')}"
 
 
-def normalize_soc(value) -> str:
-    """Return a SOC code as 'NN-NNNN'. Drops a trailing '.00' detailed suffix. NA-safe."""
+def normalize_soc(value):
+    """Return a SOC code as 'NN-NNNN' string (drops a trailing '.00' suffix), or pd.NA if missing."""
     if value is None or (isinstance(value, float) and pd.isna(value)):
         return pd.NA
     s = str(value).strip()
@@ -531,7 +533,7 @@ def parse_completions(csv_path) -> pd.DataFrame:
         & (df["MAJORNUM"] == config.FIRST_MAJOR)
         & (df["CTOTALT"] > 0)
     ].copy()
-    df = df[~df["CIPCODE"].astype(str).str.startswith("99")]  # drop grand-total rows
+    df = df[~df["CIPCODE"].astype(str).str.startswith("99")]  # CIP 99 is reserved for grand totals in CIP 2020
     df["cip"] = df["CIPCODE"].map(normalize_cip)
     df = df.dropna(subset=["cip"])
     out = df.groupby("cip", as_index=False)["CTOTALT"].sum().rename(columns={"CTOTALT": "awards"})
@@ -718,7 +720,7 @@ def parse_oews(xlsx_path, *, is_metro: bool) -> pd.DataFrame:
     return out.dropna(subset=["soc"]).drop_duplicates(subset=["soc"]).reset_index(drop=True)
 
 
-def _read_first_xlsx_from_zip(zip_path) -> pd.DataFrame.__class__:
+def _read_first_xlsx_from_zip(zip_path) -> Path:
     with zipfile.ZipFile(zip_path) as zf:
         names = [n for n in zf.namelist() if n.lower().endswith((".xlsx", ".xls"))]
         if not names:
@@ -1356,7 +1358,7 @@ def _summarize_group(g: pd.DataFrame) -> pd.Series:
         "occupation_count": int(matched["soc"].nunique()),
         "soc_match": bool(matched.shape[0] > 0),
         "catch_all_present": bool((matched["catch_all"] == True).any()),  # noqa: E712
-        "metro_data_partial": bool(matched["metro_suppressed"].fillna(True).any()) if matched.shape[0] else False,
+        "metro_data_partial": bool(matched["metro_suppressed"].isna().any() or (matched["metro_suppressed"] == True).any()) if matched.shape[0] else False,  # noqa: E712
         "wtd_median_wage_national": employment_weighted_mean(matched["nat_median"], matched["nat_tot_emp"]),
         "wtd_median_wage_national_excl_catchall": employment_weighted_mean(excl["nat_median"], excl["nat_tot_emp"]),
         "wtd_median_wage_bachelors_entry": employment_weighted_mean(bach["nat_median"], bach["nat_tot_emp"]),
@@ -1427,6 +1429,26 @@ def test_workbook_has_all_sheets(tmp_path):
     # methodology label/value present
     meth_vals = [c.value for row in wb["Methodology"].iter_rows() for c in row]
     assert "OEWS vintage" in meth_vals
+
+
+def test_summary_labels_vintages_and_openings_caveat(tmp_path):
+    summary = pd.DataFrame({
+        "cip": ["11.0701"], "program_name": ["CS"],
+        "wtd_growth_pct_national": [13.0], "total_annual_openings": [550.0],
+    })
+    detail = pd.DataFrame({"cip": ["11.0701"], "soc": ["15-1252"],
+                           "nat_growth_pct": [13.3], "dc_change_pct": [10.0]})
+    out = tmp_path / "wb.xlsx"
+    write_workbook(summary, detail, pd.DataFrame({"cip": ["11.0701"]}), [("x", "y")], out)
+    wb = load_workbook(out)
+    summ_headers = [c.value for c in wb["Summary"][1]]
+    assert "wtd_growth_pct_national_2024_34" in summ_headers
+    assert "total_annual_openings_addressable" in summ_headers
+    det_headers = [c.value for c in wb["Detail"][1]]
+    assert "nat_growth_pct_2024_34" in det_headers
+    assert "dc_change_pct_2022_32" in det_headers
+    summ_cells = [c.value for row in wb["Summary"].iter_rows() for c in row if c.value]
+    assert any("addressable-opportunity indicator" in str(v) for v in summ_cells)
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1446,26 +1468,50 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
+# Internal column name -> display header. Vintage labels prevent an unlabeled
+# side-by-side comparison of state (2022-32) and national (2024-34) growth
+# (spec Section 8 / limitation 2). The openings rename carries the caveat into the header.
+DISPLAY_RENAME = {
+    "nat_growth_pct": "nat_growth_pct_2024_34",
+    "wtd_growth_pct_national": "wtd_growth_pct_national_2024_34",
+    "dc_change_pct": "dc_change_pct_2022_32",
+    "md_change_pct": "md_change_pct_2022_32",
+    "va_change_pct": "va_change_pct_2022_32",
+    "total_annual_openings": "total_annual_openings_addressable",
+}
+
+OPENINGS_CAVEAT = (
+    "total_annual_openings_addressable sums annual openings across every occupation a major maps to. "
+    "Those occupations are not exclusive to the major, so this is an addressable-opportunity indicator, "
+    "not openings attributable solely to the program (see Methodology, limitation 9)."
+)
+
+
 def write_workbook(summary, detail, crosswalk_used, methodology, out_path) -> Path:
     out_path = Path(out_path)
+    summary_out = summary.rename(columns=DISPLAY_RENAME)
+    detail_out = detail.rename(columns=DISPLAY_RENAME)
     with pd.ExcelWriter(out_path, engine="xlsxwriter") as xw:
-        summary.to_excel(xw, sheet_name="Summary", index=False)
-        detail.to_excel(xw, sheet_name="Detail", index=False)
+        summary_out.to_excel(xw, sheet_name="Summary", index=False)
+        detail_out.to_excel(xw, sheet_name="Detail", index=False)
         crosswalk_used.to_excel(xw, sheet_name="Crosswalk Reference", index=False)
         meth_df = pd.DataFrame(methodology, columns=["Item", "Detail"])
         meth_df.to_excel(xw, sheet_name="Methodology", index=False)
 
         wb = xw.book
         wrap = wb.add_format({"text_wrap": True, "valign": "top"})
+        italic = wb.add_format({"italic": True, "valign": "top"})
         money = wb.add_format({"num_format": "$#,##0"})
-        for name, frame in (("Summary", summary), ("Detail", detail),
+        for name, frame in (("Summary", summary_out), ("Detail", detail_out),
                             ("Crosswalk Reference", crosswalk_used)):
             ws = xw.sheets[name]
             ws.freeze_panes(1, 0)
             for i, col in enumerate(frame.columns):
                 width = min(max(len(str(col)) + 2, 12), 40)
-                fmt = money if "wage" in col or "median" in col else None
+                fmt = money if ("wage" in col or "median" in col) else None
                 ws.set_column(i, i, width, fmt)
+        # Openings caveat ON the Summary sheet itself (spec Section 8), two rows below the data.
+        xw.sheets["Summary"].write(len(summary_out) + 2, 0, OPENINGS_CAVEAT, italic)
         xw.sheets["Methodology"].set_column(0, 0, 28)
         xw.sheets["Methodology"].set_column(1, 1, 90, wrap)
     log.info("wrote workbook %s", out_path)
@@ -1475,13 +1521,13 @@ def write_workbook(summary, detail, crosswalk_used, methodology, out_path) -> Pa
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `python -m pytest tests/test_excel_writer.py -v`
-Expected: PASS
+Expected: PASS (2 tests)
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/excel_writer.py tests/test_excel_writer.py
-git commit -m "feat: four-sheet Excel workbook writer"
+git commit -m "feat: four-sheet Excel workbook writer with vintage labels and openings caveat"
 ```
 
 ---
@@ -1569,7 +1615,8 @@ def main():
                      cip, label, r["occupation_count"], r["wtd_median_wage_national"],
                      r["wtd_growth_pct_national"], r["total_annual_openings"])
 
-    crosswalk_used = m[m["soc_match"]][["cip", "program_name", "soc", "soc_title"]].drop_duplicates()
+    # Keep no-match CIPs (blank SOC) so the Crosswalk Reference sheet drops nothing (spec 8/9).
+    crosswalk_used = m[["cip", "program_name", "soc", "soc_title"]].drop_duplicates()
     methodology = [
         ("Generated", dt.date.today().isoformat()),
         ("IPEDS Completions", f"{config.IPEDS_COMPLETIONS_FILE} (Final 2023-24 collection; degrees conferred Jul 2022-Jun 2023)"),
@@ -1605,6 +1652,7 @@ market outcomes using only public government data. See
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+pip install pip-audit && pip-audit   # post-install vulnerability scan of the dependency tree
 ```
 
 ## Run
@@ -1651,3 +1699,4 @@ git commit -m "feat: orchestrator, README, and end-to-end integration run"
 - **Placeholder scan:** every code step contains full code; the two manual-placement sources (projections, state) fail loud with exact paths rather than leaving a TODO.
 - **Type consistency:** column names follow the Data Contracts section; function names (`build_mapping`, `build_detail`, `build_summary`, `parse_oews(is_metro=)`, `employment_weighted_mean`) are used identically across tasks and tests.
 - **Known runtime adjustments (expected, not gaps):** exact EP/Projections Central download URLs and the OEWS group-column name are confirmed against real files during Task 13, per spec Section 13.
+- **Post-review fixes (QA + Executive, 2026-05-28):** Crosswalk Reference now retains no-match CIPs (Task 13); growth columns carry vintage labels and the openings column carries the "addressable" caveat plus an on-sheet note (Task 12); `metro_data_partial` hardened against the pandas object-NA downcast (Task 11); annotation/test cosmetics tidied (Tasks 3, 6); README adds a `pip-audit` step (Task 13).
