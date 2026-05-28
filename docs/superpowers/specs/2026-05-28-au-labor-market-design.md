@@ -39,9 +39,9 @@ by a deliberate config change.
 
 | Source | Pinned vintage | Expected file | Notes |
 |---|---|---|---|
-| IPEDS Completions | **Final 2023-24** | `C2023_A` | Final (revised) chosen over Provisional 2024-25 for defensibility in an official, public review. |
+| IPEDS Completions | **Final 2023-24 collection** | `C2023_A` | Reports degrees conferred July 2022 to June 2023 (award year 2022-23). Final (revised) chosen over Provisional 2024-25 for defensibility in an official, public review. |
 | CIP-SOC crosswalk | CIP2020 / SOC2018 | `CIP2020_SOC2018_Crosswalk.xlsx` | Current crosswalk; URL verified live. |
-| OEWS national | **May 2025** | `oesm25nat.zip` | Released 2025-05-15 (USDL-26-0725). |
+| OEWS national | **May 2025** | `oesm25nat.zip` | Reference period May 2025; released May 2026 (USDL-26-0725). |
 | OEWS metro | **May 2025** | `oesm25ma.zip` | All metros; filter `AREA == 47900` in code. |
 | National projections | **2024-34** | BLS EP occupational data table | Released 2025-08-28. |
 | State projections | **2022-32** | Projections Central long-term export | Newer cycle not yet published; vintage differs from national EP (see limitation 2 + 10). |
@@ -127,7 +127,7 @@ IPEDS Completions
 
 | Source | Pinned file / URL | Key fields |
 |---|---|---|
-| IPEDS Completions | NCES complete data file `C2023_A` (Final 2023-24) | `UNITID`, `CIPCODE`, `AWLEVEL`, `MAJORNUM`, `CTOTALT` |
+| IPEDS Completions | NCES complete data file `C2023_A` (Final 2023-24 collection; degrees conferred July 2022 to June 2023) | `UNITID`, `CIPCODE`, `AWLEVEL`, `MAJORNUM`, `CTOTALT` |
 | CIP-SOC crosswalk | `nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx` (verified live) | CIP code, CIP title, SOC code, SOC title |
 | OEWS national | `bls.gov/oes` data zip `oesm25nat.zip` (May 2025) | `OCC_CODE`, group col, `TOT_EMP`, `A_MEDIAN`, `A_MEAN`, `A_PCT10/25/75/90` |
 | OEWS metro | `bls.gov/oes` data zip `oesm25ma.zip` (filter `AREA=47900`) | as above + `LOC_QUOTIENT`; suppression markers `*` / `#` |
@@ -163,8 +163,10 @@ IPEDS Completions
   the per-SOC typical entry-level education, and the catch-all flag.
 - **Crosswalk Reference sheet**, the full CIP-to-SOC mapping actually used.
 - **Methodology sheet**, data sources, exact vintages, URLs, download dates, governance note,
-  the cross-vintage disclosure (national EP 2024-34 vs state 2022-32 vs OEWS May 2025), and the
-  documented limitations (Section 10).
+  the cross-vintage disclosure (national EP 2024-34 vs state 2022-32 vs OEWS May 2025), the IPEDS
+  conferral-year clarification (the 2023-24 collection reports degrees conferred July 2022 to June 2023),
+  and the documented limitations (Section 10). Completions counts on the Summary/Detail sheets are
+  labeled by conferral year, not collection year.
 
 ## 9. Error handling and QA
 
