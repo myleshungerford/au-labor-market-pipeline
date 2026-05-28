@@ -13,6 +13,7 @@ processed/
 logs/
 output/
 
-# OS cruft
+# OS / editor cruft
 Thumbs.db
 .DS_Store
+.Rhistory
