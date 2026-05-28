@@ -1,7 +1,22 @@
+import zipfile
+
 import numpy as np
 import pandas as pd
 import pytest
+from src.acquire import oews
 from src.acquire.oews import parse_oews, _to_num, _resolve_group_col
+
+
+def test_extract_member_picks_msa_not_bos(tmp_path, monkeypatch):
+    monkeypatch.setattr(oews.config, "RAW_DIR", tmp_path)
+    members = ("BOS_M2025_dl.xlsx", "MSA_M2025_dl.xlsx", "file_descriptions.xlsx")
+    for nm in members:
+        pd.DataFrame({"AREA": ["x"]}).to_excel(tmp_path / nm, index=False)
+    zpath = tmp_path / "oesm25ma.zip"
+    with zipfile.ZipFile(zpath, "w") as zf:
+        for nm in members:
+            zf.write(tmp_path / nm, arcname=f"oesm25ma/{nm}")
+    assert oews._extract_member(zpath, prefer="MSA").name == "MSA_M2025_dl.xlsx"
 
 
 def test_to_num_handles_suppression():

@@ -81,13 +81,26 @@ def parse_oews(xlsx_path, *, is_metro: bool) -> pd.DataFrame:
     )
 
 
-def _read_first_xlsx_from_zip(zip_path) -> Path:
+def _extract_member(zip_path, *, prefer: str) -> Path:
+    """Extract the OEWS data spreadsheet whose member name contains `prefer`
+    (case-insensitive), skipping the field/file descriptions workbook. The metro
+    zip bundles several files (BOS = balance-of-state/nonmetro, MSA = metro areas,
+    file_descriptions), so the right one must be chosen explicitly, not taken first."""
     with zipfile.ZipFile(zip_path) as zf:
-        names = [n for n in zf.namelist() if n.lower().endswith((".xlsx", ".xls"))]
-        if not names:
-            raise ValueError(f"no spreadsheet in {zip_path}: {zf.namelist()}")
-        target = config.RAW_DIR / Path(names[0]).name
-        with zf.open(names[0]) as fh, open(target, "wb") as out:
+        sheets = [n for n in zf.namelist() if n.lower().endswith((".xlsx", ".xls"))]
+        data = [n for n in sheets if "description" not in n.lower()]
+        if not data:
+            raise ValueError(f"no data spreadsheet in {zip_path}: {zf.namelist()}")
+        chosen = next((n for n in data if prefer.lower() in Path(n).name.lower()), None)
+        if chosen is None:
+            if len(data) == 1:
+                chosen = data[0]
+            else:
+                raise ValueError(
+                    f"no OEWS member matching {prefer!r} in {zip_path}; candidates: {data}"
+                )
+        target = config.RAW_DIR / Path(chosen).name
+        with zf.open(chosen) as fh, open(target, "wb") as out:
             out.write(fh.read())
     return target
 
@@ -95,10 +108,10 @@ def _read_first_xlsx_from_zip(zip_path) -> Path:
 def get_oews_national() -> pd.DataFrame:
     z = config.RAW_DIR / config.OEWS_NATIONAL_ZIP
     download(config.OEWS_NATIONAL_URL, z)
-    return parse_oews(_read_first_xlsx_from_zip(z), is_metro=False)
+    return parse_oews(_extract_member(z, prefer="nat"), is_metro=False)
 
 
 def get_oews_metro() -> pd.DataFrame:
     z = config.RAW_DIR / config.OEWS_METRO_ZIP
     download(config.OEWS_METRO_URL, z)
-    return parse_oews(_read_first_xlsx_from_zip(z), is_metro=True)
+    return parse_oews(_extract_member(z, prefer="MSA"), is_metro=True)

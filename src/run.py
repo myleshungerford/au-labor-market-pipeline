@@ -59,7 +59,19 @@ def main():
     nat = _cache(oews.get_oews_national(), "oews_national")
     metro = _cache(oews.get_oews_metro(), "oews_metro")
     proj = _cache(projections.get_projections(), "projections")
-    state = _cache(state_proj.get_state_projections(), "state_projections")
+    # State DC/MD/VA growth is a documented proxy (spec limitation 2), not a core source.
+    # If its file is not present, degrade loudly to empty state columns rather than aborting
+    # the whole deliverable (national + metro remain fully populated).
+    try:
+        state = _cache(state_proj.get_state_projections(), "state_projections")
+    except FileNotFoundError as exc:
+        log.warning(
+            "STATE PROXY UNAVAILABLE, proceeding with empty DC/MD/VA columns: %s", exc
+        )
+        state = pd.DataFrame(
+            columns=["soc", "dc_change_pct", "md_change_pct", "va_change_pct"]
+        )
+        _cache(state, "state_projections")
 
     m = _cache(mapping.build_mapping(comp, cw), "mapping")
     detail = _cache(join.build_detail(m, nat, metro, proj, state), "detail")
@@ -88,6 +100,11 @@ def main():
             )
 
     crosswalk_used = m[["cip", "program_name", "soc", "soc_title"]].drop_duplicates()
+    state_note = (
+        "Projections Central long-term 2022-32 (DC/MD/VA proxy; different base year from national)"
+        if not state.empty
+        else "State DC/MD/VA proxy NOT included in this run (source pending); national and metro figures are complete."
+    )
     methodology = [
         ("Generated", dt.date.today().isoformat()),
         (
@@ -100,10 +117,7 @@ def main():
             "May 2025 reference period (released May 2026); national + DC MSA 47900",
         ),
         ("National projections", "BLS Employment Projections 2024-34"),
-        (
-            "State projections",
-            "Projections Central long-term 2022-32 (DC/MD/VA proxy; different base year from national)",
-        ),
+        ("State projections", state_note),
         (
             "Governance",
             "All sources public, aggregate, non-PII government data; no FERPA exposure.",

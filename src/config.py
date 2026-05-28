@@ -29,7 +29,7 @@ CROSSWALK_URL = "https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswa
 IPEDS_COMPLETIONS_URL = "https://nces.ed.gov/ipeds/datacenter/data/C2023_A.zip"
 OEWS_NATIONAL_URL = "https://www.bls.gov/oes/special-requests/oesm25nat.zip"
 OEWS_METRO_URL = "https://www.bls.gov/oes/special-requests/oesm25ma.zip"
-PROJECTIONS_URL = "https://www.bls.gov/emp/data/occupational-data.htm"  # resolve the .xlsx link at runtime
+PROJECTIONS_URL = "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx"  # EP occupation workbook; data on sheet "Table 1.2"
 STATE_PROJECTIONS_URL = (
     "https://projectionscentral.org/longterm"  # resolve the export at runtime
 )
