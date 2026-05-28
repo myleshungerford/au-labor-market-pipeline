@@ -1371,7 +1371,9 @@ def _summarize_group(g: pd.DataFrame) -> pd.Series:
 
 
 def build_summary(detail: pd.DataFrame) -> pd.DataFrame:
-    summary = detail.groupby("cip", sort=True).apply(_summarize_group, include_groups=False).reset_index()
+    # pandas 3.0 excludes the grouping column from the applied frame by default
+    # and removed the include_groups kwarg, so do not pass it.
+    summary = detail.groupby("cip", sort=True).apply(_summarize_group).reset_index()
     ordered = ["cip", "program_name", "awards", "occupation_count", "soc_match",
                "catch_all_present", "metro_data_partial", "wtd_median_wage_national",
                "wtd_median_wage_national_excl_catchall", "wtd_median_wage_bachelors_entry",
@@ -1380,7 +1382,8 @@ def build_summary(detail: pd.DataFrame) -> pd.DataFrame:
     return summary[ordered]
 ```
 
-> **Note:** `include_groups=False` requires pandas >= 2.2. If the installed pandas warns, that is acceptable; do not downgrade.
+> **Note:** Built and tested against pandas 3.0.3, where `groupby.apply` excludes the grouping
+> column by default and the `include_groups` kwarg no longer exists. Do not re-add it.
 
 - [ ] **Step 4: Run test to verify it passes**
 

@@ -1,0 +1,8 @@
+pandas>=2.2
+openpyxl>=3.1
+xlsxwriter>=3.2
+requests>=2.32
+tenacity>=9.0
+tqdm>=4.66
+pyarrow>=16.0
+pytest>=8.0
