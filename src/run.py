@@ -3,6 +3,7 @@ import datetime as dt
 import logging
 
 import pandas as pd
+import requests
 
 from src import config
 from src.acquire import crosswalk, ipeds, oews, projections, state_proj
@@ -64,7 +65,9 @@ def main():
     # the whole deliverable (national + metro remain fully populated).
     try:
         state = _cache(state_proj.get_state_projections(), "state_projections")
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, requests.exceptions.RequestException) as exc:
+        # Source unreachable -> degrade loudly. (Guardrail ValueErrors are NOT caught here;
+        # a coverage/vintage shift hard-fails the build by design.)
         log.warning(
             "STATE PROXY UNAVAILABLE, proceeding with empty DC/MD/VA columns: %s", exc
         )

@@ -31,8 +31,18 @@ OEWS_NATIONAL_URL = "https://www.bls.gov/oes/special-requests/oesm25nat.zip"
 OEWS_METRO_URL = "https://www.bls.gov/oes/special-requests/oesm25ma.zip"
 PROJECTIONS_URL = "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx"  # EP occupation workbook; data on sheet "Table 1.2"
 STATE_PROJECTIONS_URL = (
-    "https://projectionscentral.org/longterm"  # resolve the export at runtime
+    "https://projectionscentral.org/longterm"  # human landing page (JS app)
 )
+# Projections Central bulk file endpoint returns JSON {"content": <900s presigned S3 CSV URL>}.
+# Use ONLY this bulk path; the per-state paginated JSON endpoint silently drops ~100 rows/state.
+STATE_PROJECTIONS_CSV_ENDPOINT = (
+    "https://public.projectionscentral.org/projections/file/longterm/csv"
+)
+STATE_FIPS = {"DC": "11", "MD": "24", "VA": "51"}
+# Guardrail (hard-fail if these shift): per-state row counts INCLUDING the 00-0000 total row,
+# and the projection cycle. A mismatch means upstream vintage/coverage changed; stop and review.
+STATE_EXPECTED_COUNTS = {"11": 442, "24": 749, "51": 741}
+STATE_PROJECTION_VINTAGE = ("2022", "2032")
 
 # --- HTTP ---
 # BLS requests a descriptive User-Agent with a contact email (policy, not auth).
