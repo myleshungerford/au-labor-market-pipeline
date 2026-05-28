@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Data: re-downloadable source files and regenerable intermediates/outputs
+raw/
+processed/
+logs/
+output/
+
+# OS cruft
+Thumbs.db
+.DS_Store
