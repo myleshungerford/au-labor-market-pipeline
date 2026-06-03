@@ -25,7 +25,12 @@ def _summarize_group(g: pd.DataFrame) -> pd.Series:
     return pd.Series(
         {
             "program_name": g["program_name"].iloc[0],
+            "program_short_name": g["program_short_name"].iloc[0],
+            "cip_title": g["cip_title"].iloc[0],
+            "program_name_note": g["program_name_note"].iloc[0],
             "awards": int(g["awards"].iloc[0]),
+            "cip_in_ipeds_completions": bool(g["cip_in_ipeds_completions"].iloc[0]),
+            "awards_source_note": g["awards_source_note"].iloc[0],
             "occupation_count": int(matched["soc"].nunique()),
             "soc_match": bool(matched.shape[0] > 0),
             "catch_all_present": bool((matched["catch_all"] == True).any()),  # noqa: E712
@@ -50,6 +55,9 @@ def _summarize_group(g: pd.DataFrame) -> pd.Series:
                 matched["nat_growth_pct"], matched["nat_tot_emp"]
             ),
             "total_annual_openings": matched["nat_annual_openings"].sum(min_count=1),
+            "total_annual_openings_excl_catchall": excl["nat_annual_openings"].sum(
+                min_count=1
+            ),
             "wtd_metro_median_wage": employment_weighted_mean(
                 matched["metro_median"], matched["metro_tot_emp"]
             ),
@@ -67,7 +75,12 @@ def build_summary(detail: pd.DataFrame) -> pd.DataFrame:
     ordered = [
         "cip",
         "program_name",
+        "program_short_name",
+        "cip_title",
+        "program_name_note",
         "awards",
+        "cip_in_ipeds_completions",
+        "awards_source_note",
         "occupation_count",
         "soc_match",
         "catch_all_present",
@@ -79,6 +92,7 @@ def build_summary(detail: pd.DataFrame) -> pd.DataFrame:
         "occ_median_max",
         "wtd_growth_pct_national",
         "total_annual_openings",
+        "total_annual_openings_excl_catchall",
         "wtd_metro_median_wage",
     ]
     return summary[ordered]

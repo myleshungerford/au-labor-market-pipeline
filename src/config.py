@@ -5,6 +5,8 @@ RAW_DIR = PROJECT_ROOT / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "processed"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 LOG_DIR = PROJECT_ROOT / "logs"
+PROGRAM_INVENTORY_PATH = PROJECT_ROOT / "program_inventory.csv"
+PROGRAM_CIP_MAP_PATH = PROJECT_ROOT / "program_cip_map.csv"
 
 for _d in (RAW_DIR, PROCESSED_DIR, OUTPUT_DIR, LOG_DIR):
     _d.mkdir(parents=True, exist_ok=True)
@@ -54,6 +56,10 @@ STATES = ("DC", "MD", "VA")
 # Catch-all occupations distort employment-weighted summaries. Maintained list + a rule
 # that any SOC whose title ends with "All Other" is also treated as catch-all (see join.py).
 CATCH_ALL_SOCS = {"11-1021"}  # General and Operations Managers
+# A catch-all occupation is hidden from the one-pager list only when its CIP already has
+# at least this many non-catch-all matched occupations. Below the threshold the catch-all
+# is surfaced, so a data-poor program is not left with a blank one-pager occupation list.
+ONE_PAGER_MIN_REAL_OCCUPATIONS = 5
 BACHELORS_PLUS_EDUCATION = {
     "Bachelor's degree",
     "Master's degree",

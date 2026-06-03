@@ -13,8 +13,14 @@ processed/
 logs/
 output/
 
+# Raw registrar export: internal/granular, not needed to reproduce (the cleaned CSVs are committed)
+Active Programs by CIP.xlsx
+
 # Local session notes (e.g. goodnight handoffs); not part of the public deliverable
 handoffs/
+
+# Internal email drafts; not part of the public deliverable
+email_drafts/
 
 # OS / editor cruft
 Thumbs.db

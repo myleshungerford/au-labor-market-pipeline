@@ -22,7 +22,16 @@ def _detail():
         {
             "cip": ["11.0701", "11.0701", "30.9999"],
             "program_name": ["CS", "CS", "Multi"],
+            "program_short_name": ["CS", "CS", ""],
+            "cip_title": ["Computer Science", "Computer Science", "Multi CIP"],
+            "program_name_note": ["", "", ""],
             "awards": [42, 42, 7],
+            "cip_in_ipeds_completions": [True, True, False],
+            "awards_source_note": [
+                "IPEDS first-major bachelor's awards, 2022-23 conferral year.",
+                "IPEDS first-major bachelor's awards, 2022-23 conferral year.",
+                "Active-program CIP from local inventory; no first-major bachelor's awards found in IPEDS C2023_A.",
+            ],
             "soc": ["15-1252", "11-1021", pd.NA],
             "soc_title": [
                 "Software Developers",
@@ -60,6 +69,8 @@ def test_summary_weighted_and_flags():
     assert cs["occ_median_min"] == 100000.0
     assert cs["occ_median_max"] == 120000.0
     assert cs["total_annual_openings"] == 550.0
+    # excluding the catch-all (11-1021, 400 openings): only Software Developers -> 150
+    assert cs["total_annual_openings_excl_catchall"] == 150.0
     assert cs["catch_all_present"] == True
     assert cs["soc_match"] == True
     # metro weighted wage: (135000*600 + 110000*1400)/2000 = 117500
@@ -68,4 +79,6 @@ def test_summary_weighted_and_flags():
     nm = s[s["cip"] == "30.9999"].iloc[0]
     assert nm["soc_match"] == False
     assert nm["occupation_count"] == 0
+    assert nm["cip_in_ipeds_completions"] == False
+    assert "no first-major bachelor's awards" in nm["awards_source_note"]
     assert pd.isna(nm["wtd_median_wage_national"])

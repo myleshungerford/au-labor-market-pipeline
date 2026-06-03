@@ -13,6 +13,19 @@ def _is_catch_all(soc, soc_title) -> bool:
     return str(soc_title).strip().lower().endswith("all other")
 
 
+def _one_pager_display_note(soc, soc_title):
+    title = str(soc_title).strip()
+    if pd.isna(soc):
+        return pd.NA
+    if soc == "11-1021":
+        return "general management category"
+    if title.lower().endswith("all other"):
+        return "residual catch-all occupation"
+    if soc in config.CATCH_ALL_SOCS:
+        return "broad catch-all occupation"
+    return pd.NA
+
+
 def build_detail(mapping, oews_nat, oews_metro, proj, state) -> pd.DataFrame:
     d = mapping.copy()
 
@@ -50,6 +63,21 @@ def build_detail(mapping, oews_nat, oews_metro, proj, state) -> pd.DataFrame:
         _is_catch_all(s, t) if pd.notna(s) else False
         for s, t in zip(d["soc"], d["soc_title"])
     ]
+    d["one_pager_display_note"] = [
+        _one_pager_display_note(s, t) for s, t in zip(d["soc"], d["soc_title"])
+    ]
+    # Hide catch-all occupations from the one-pager list, but only for CIPs that already
+    # carry enough non-catch-all matched occupations. Data-poor CIPs keep their catch-all
+    # so the one-pager is not left blank (see config.ONE_PAGER_MIN_REAL_OCCUPATIONS).
+    real_occ_per_cip = (
+        d[(d["soc_match"] == True) & (~d["catch_all"])]  # noqa: E712
+        .groupby("cip")["soc"]
+        .nunique()
+    )
+    cip_real_occ = d["cip"].map(real_occ_per_cip).fillna(0)
+    d["do_not_display_on_one_pager"] = d["catch_all"] & (
+        cip_real_occ >= config.ONE_PAGER_MIN_REAL_OCCUPATIONS
+    )
     d["entry_education"] = d["entry_education"].where(
         d["entry_education"].notna(), pd.NA
     )
@@ -57,11 +85,18 @@ def build_detail(mapping, oews_nat, oews_metro, proj, state) -> pd.DataFrame:
     cols = [
         "cip",
         "program_name",
+        "program_short_name",
+        "cip_title",
+        "program_name_note",
         "awards",
+        "cip_in_ipeds_completions",
+        "awards_source_note",
         "soc",
         "soc_title",
         "soc_match",
         "catch_all",
+        "do_not_display_on_one_pager",
+        "one_pager_display_note",
         "entry_education",
         "nat_tot_emp",
         "nat_median",

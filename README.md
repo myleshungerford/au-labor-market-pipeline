@@ -21,7 +21,17 @@ All six sources download automatically (IPEDS Completions, the CIP-SOC crosswalk
 and DC-metro wages, BLS 2024-34 projections, and DC/MD/VA state projections). Downloads are cached
 in `raw/` so re-runs are fast; `--force` refreshes them.
 
-Output: `output/au_labor_market_<date>.xlsx` (Summary / Detail / Crosswalk Reference / Methodology).
+Outputs:
+- `output/au_labor_market_<date>.xlsx` (CIP-level Summary / Detail / Crosswalk Reference / Methodology).
+- `output/au_program_onepager_data_<date>.xlsx` (program-facing one-pager dataset keyed by `program_id`).
+
+Populate `program_inventory.csv` and `program_cip_map.csv` with verified local program records to replace
+the generated CIP placeholders in the program-facing workbook.
+
+After reviewing the registrar active-program cleanup workbook, refresh those source CSVs with:
+```
+python -m src.active_program_sources --clean-workbook output/active_programs_cleaned_2026-05-29.xlsx
+```
 
 ## Notes on data sources
 - National + DC-metro figures (wages, employment, national growth and openings) are the

@@ -143,9 +143,9 @@ IPEDS Completions
   "No SOC match"/blank SOC -> the CIP is retained with `soc_match = FALSE`.
 - All codes align on CIP 2020 / SOC 2018, so no cross-vintage code translation is needed.
 
-## 8. Output workbook
+## 8. Output workbooks
 
-- **Summary sheet**, one row per AU major: CIP, program name, awards count, occupation count,
+- **CIP labor-market workbook**, one row per CIP on the Summary sheet: CIP, official CIP title, awards count, occupation count,
   `soc_match` flag, employment-weighted mean of occupational median wages (national), a second
   employment-weighted wage restricted to bachelor's-or-higher entry-education SOCs, min/max
   occupational median, employment-weighted national projected growth % (base year 2024-34), total
@@ -154,14 +154,31 @@ IPEDS Completions
   median wage (where available), a `metro_data_partial` flag, and a `catch_all_present` flag indicating
   whether any associated SOC is a broad catch-all occupation (see below). A companion column or
   toggle shows the weighted wage with catch-all SOCs excluded.
+- **AU program one-pager workbook**, one row per AU program record on the Program One-Pager Data sheet:
+  `program_id`, AU-facing program name, local program metadata, mapped CIP, official CIP title, mapping
+  status, and CIP-level labor-market metrics. If verified local program inventory is not available,
+  the workbook generates clearly marked CIP placeholders that are not ready for publication.
+  `one_pager_ready` requires a verified AU program name, a verified program-to-CIP mapping, and a
+  CIP labor-market summary match in the current pipeline output. Rows without a labor-market match
+  remain in the workbook with an explicit blocker so the active program inventory stays auditable.
 - **State growth columns** never sit unlabeled beside national: any state (DC/MD/VA) growth % is shown
   in its own labeled `2022-32` column, distinct from the national `2024-34` growth column.
+- **Program display names:** labor-market mapping remains keyed by CIP. AU-facing program names are
+  supplied separately through `program_inventory.csv` and linked to federal data through
+  `program_cip_map.csv`. The official CIP taxonomy title remains `cip_title` for auditability.
 - **Catch-all flagging:** SOC rows known to be broad catch-alls (e.g., "General and Operations Managers",
   codes ending in residual patterns) are flagged via a small maintained list so Summary can be read
   with and without them; the flag also appears per row on the Detail sheet.
+- **One-pager display flags:** broad residual occupations are retained in Detail and Crosswalk Reference
+  for auditability, but marked `do_not_display_on_one_pager = TRUE` when they should not drive a
+  stakeholder one-page display. The Detail sheet also carries `one_pager_display_note` with the reason
+  (for example, residual catch-all occupation or general management category). Current rules flag SOC
+  titles ending in "All Other" and `11-1021` General and Operations Managers.
 - **Detail sheet**, one row per AU-major-to-occupation mapping with full national + metro + state metrics,
-  the per-SOC typical entry-level education, and the catch-all flag.
+  the per-SOC typical entry-level education, the catch-all flag, and one-pager display flags.
 - **Crosswalk Reference sheet**, the full CIP-to-SOC mapping actually used.
+- **Program-CIP Map sheet**, in the program workbook, showing the local program-to-CIP relationship,
+  whether it is verified, and whether a CIP is shared across multiple program records.
 - **Methodology sheet**, data sources, exact vintages, URLs, download dates, governance note,
   the cross-vintage disclosure (national EP 2024-34 vs state 2022-32 vs OEWS May 2025), the IPEDS
   conferral-year clarification (the 2023-24 collection reports degrees conferred July 2022 to June 2023),
@@ -188,13 +205,19 @@ IPEDS Completions
 4. The crosswalk is many-to-many, so summary statistics obscure the range of outcomes; the Detail sheet
    is the source of truth.
 5. Employment-weighting can pull a program's summary toward large catch-all occupations (e.g., "General
-   and Operations Managers") that map to many majors. Mitigated by the `catch_all_present` flag and a
-   weighted-wage variant that excludes catch-all SOCs (Section 8), so the reader can see both.
-6. BLS projections assume no major structural disruptions and incorporate AI impacts conservatively.
-7. OEWS covers wage-and-salary workers only (excludes the self-employed).
-8. Data vintages are pinned (Section 3.1) and recorded with download date per source; the pipeline fails
+   and Operations Managers") that map to many majors. Mitigated by the `catch_all_present` flag, a
+   weighted-wage variant that excludes catch-all SOCs, and one-pager display flags (Section 8), so the
+   reader can see both the full source mapping and a presentation-safe view.
+6. One-pager display flags affect presentation only. They do not remove NCES/BLS crosswalk mappings from
+   Detail or Crosswalk Reference.
+7. Program one-pagers are program-facing artifacts, but labor-market metrics remain CIP-level unless
+   separate local outcome or allocation data is supplied. Shared-CIP program rows must be interpreted
+   as using the same CIP-level labor-market signal.
+8. BLS projections assume no major structural disruptions and incorporate AI impacts conservatively.
+9. OEWS covers wage-and-salary workers only (excludes the self-employed).
+10. Data vintages are pinned (Section 3.1) and recorded with download date per source; the pipeline fails
    loud rather than silently substituting a different release.
-9. Summed annual openings in the Summary sheet count openings across all occupations a major maps to;
+11. Summed annual openings in the Summary sheet count openings across all occupations a major maps to;
    those occupations are not exclusive to that major, so the figure is an addressable-opportunity
    indicator, not openings attributable solely to the program.
 

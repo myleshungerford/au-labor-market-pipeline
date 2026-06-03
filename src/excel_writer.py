@@ -21,7 +21,7 @@ DISPLAY_RENAME = {
 OPENINGS_CAVEAT = (
     "total_annual_openings_addressable sums annual openings across every occupation a major maps to. "
     "Those occupations are not exclusive to the major, so this is an addressable-opportunity indicator, "
-    "not openings attributable solely to the program (see Methodology, limitation 9)."
+    "not openings attributable solely to the program (see Methodology, limitation 11)."
 )
 
 
