@@ -33,6 +33,20 @@ After reviewing the registrar active-program cleanup workbook, refresh those sou
 python -m src.active_program_sources --clean-workbook output/active_programs_cleaned_2026-05-29.xlsx
 ```
 
+## Program labor-market briefs
+
+`templates/AU_Program_Briefs_All_81_printable.html` is the print source for the
+full brief set. Keep corrections to the brief layout or copy in that file, then run:
+
+```
+python -m src.program_briefs
+```
+
+The command renders the full-set PDF and refreshes all one-page program PDFs in
+`output/program-labor-market-briefs/` from that same render. If the full-set PDF
+is corrected directly, use `python -m src.program_briefs --split-only` to refresh
+the individual files without re-rendering the HTML.
+
 ## Notes on data sources
 - National + DC-metro figures (wages, employment, national growth and openings) are the
   load-bearing data, drawn from BLS OEWS and Employment Projections and IPEDS.

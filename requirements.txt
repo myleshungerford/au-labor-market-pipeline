@@ -5,4 +5,5 @@ requests>=2.32
 tenacity>=9.0
 tqdm>=4.66
 pyarrow>=16.0
+pypdf>=6.16.1
 pytest>=8.0
