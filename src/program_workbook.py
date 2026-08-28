@@ -373,4 +373,8 @@ def program_methodology():
             "Labor-market proxy",
             "A program whose reported CIP is a residual code with no occupational crosswalk match may carry a labor_market_cip proxy: the occupation, wage, growth, and openings panel is drawn from a representative CIP, while the reported CIP and all award figures are unchanged. Such rows are flagged labor_market_data_level = 'CIP (proxy)' and carry a labor_market_proxy_note. The proxy lives on the program, not the CIP, so two programs sharing one reported CIP can use different proxies.",
         ),
+        (
+            "Non-offered fields (one-off)",
+            "program_id hp_ppol (Public Policy, CIP 44.0501) and hp_padm (Public Administration, CIP 44.0401) were added 2026-08-28 as illustrative fields (not current AU undergraduate majors). American University offers neither as an undergraduate major, so both carry zero IPEDS bachelor's awards; their labor-market figures are national/DC-metro CIP data like any other program. See docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md.",
+        ),
     ]

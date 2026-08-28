@@ -1,8 +1,14 @@
 import csv
+from zipfile import ZipFile
 
 from pypdf import PdfReader, PdfWriter
 
-from src.program_briefs import load_program_names, safe_filename, split_full_set
+from src.program_briefs import (
+    create_delivery_archive,
+    load_program_names,
+    safe_filename,
+    split_full_set,
+)
 
 
 def test_safe_filename_preserves_readable_program_name():
@@ -47,3 +53,24 @@ def test_split_full_set_replaces_stale_files_with_one_page_per_program(tmp_path)
         "002 - Zoology (BS).pdf",
     ]
     assert all(len(PdfReader(output).pages) == 1 for output in outputs)
+
+
+def test_create_delivery_archive_contains_each_program_pdf(tmp_path):
+    briefs = tmp_path / "program-labor-market-briefs"
+    briefs.mkdir()
+    outputs = []
+    for number, name in enumerate(["Accounting (BS)", "Zoology (BS)"], start=1):
+        output = briefs / f"{number:03d} - {name}.pdf"
+        writer = PdfWriter()
+        writer.add_blank_page(width=72, height=72)
+        with output.open("wb") as stream:
+            writer.write(stream)
+        outputs.append(output)
+
+    archive = create_delivery_archive(outputs, tmp_path / "briefs.zip")
+
+    with ZipFile(archive) as bundle:
+        assert bundle.namelist() == [
+            "program-labor-market-briefs/001 - Accounting (BS).pdf",
+            "program-labor-market-briefs/002 - Zoology (BS).pdf",
+        ]

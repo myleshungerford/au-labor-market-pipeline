@@ -35,17 +35,36 @@ python -m src.active_program_sources --clean-workbook output/active_programs_cle
 
 ## Program labor-market briefs
 
-`templates/AU_Program_Briefs_All_81_printable.html` is the print source for the
+`templates/AU_Program_Briefs_All_printable.html` is the print source for the
 full brief set. Keep corrections to the brief layout or copy in that file, then run:
 
 ```
 python -m src.program_briefs
 ```
 
-The command renders the full-set PDF and refreshes all one-page program PDFs in
-`output/program-labor-market-briefs/` from that same render. If the full-set PDF
-is corrected directly, use `python -m src.program_briefs --split-only` to refresh
-the individual files without re-rendering the HTML.
+The command renders the full-set PDF, refreshes all one-page program PDFs in
+`output/program-labor-market-briefs/`, and creates
+`output/Program Labor-Market Briefs - Individual PDFs.zip` from that same render.
+If the full-set PDF is corrected directly, use
+`python -m src.program_briefs --split-only` to refresh the individual files and
+the delivery ZIP without re-rendering the HTML. If an individual PDF is corrected
+directly, use `python -m src.program_briefs --package-only` to refresh only the
+delivery ZIP.
+
+To add a program to the brief set, add its rows to `program_inventory.csv` and
+`program_cip_map.csv`, run `python -m src.run` to refresh the one-pager workbook,
+then run:
+
+```
+python -m src.build_briefs_bundle
+```
+
+This regenerates each program's data record from the workbook and splices any
+program not already in the bundle into `window.PROGRAMS2`, leaving the existing
+records and every other asset untouched. Run `python -m src.program_briefs`
+afterward to re-render the PDFs. See
+`docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md` for the
+design and the data-provenance rationale.
 
 ## Notes on data sources
 - National + DC-metro figures (wages, employment, national growth and openings) are the

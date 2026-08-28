@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from pypdf import PdfReader, PdfWriter
 
@@ -91,6 +92,47 @@ def split_full_set(
         shutil.rmtree(staging, ignore_errors=True)
 
 
+def create_delivery_archive(
+    brief_paths: list[Path],
+    archive_path: Path = config.PROGRAM_BRIEFS_ARCHIVE_PATH,
+) -> Path:
+    """Replace the delivery ZIP with exactly the current individual program PDFs."""
+    if not brief_paths:
+        raise ProgramBriefsError("No program PDFs are available to package.")
+    if any(not path.is_file() for path in brief_paths):
+        raise ProgramBriefsError("Cannot package a missing program PDF.")
+
+    archive_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        prefix="program-briefs-", suffix=".zip", dir=archive_path.parent, delete=False
+    ) as stream:
+        staged_archive = Path(stream.name)
+    try:
+        with ZipFile(staged_archive, "w", compression=ZIP_DEFLATED) as archive:
+            for brief_path in sorted(brief_paths, key=lambda path: path.name):
+                archive.write(brief_path, arcname=f"{brief_path.parent.name}/{brief_path.name}")
+        os.replace(staged_archive, archive_path)
+    finally:
+        staged_archive.unlink(missing_ok=True)
+    return archive_path
+
+
+def current_program_briefs(
+    program_names: list[str], destination: Path = config.PROGRAM_BRIEFS_DIR
+) -> list[Path]:
+    """Return the expected individual PDFs without altering a direct PDF correction."""
+    briefs = [
+        destination / f"{number:03d} - {safe_filename(name)}.pdf"
+        for number, name in enumerate(program_names, start=1)
+    ]
+    missing = [path.name for path in briefs if not path.is_file()]
+    if missing:
+        raise ProgramBriefsError(
+            f"Cannot package incomplete briefs. Missing: {', '.join(missing)}"
+        )
+    return briefs
+
+
 def find_chrome(chrome_override: Path | None = None) -> Path:
     """Locate Chrome, which produced the existing full-set PDF."""
     candidates = [chrome_override] if chrome_override else []
@@ -149,6 +191,7 @@ def build_from_html(
         render_html_to_pdf(html_path, rendered, find_chrome(chrome_path))
         outputs = split_full_set(rendered, program_names, destination)
         os.replace(rendered, full_set_path)
+        create_delivery_archive(outputs)
     return outputs
 
 
@@ -165,10 +208,16 @@ def main() -> None:
     parser.add_argument(
         "--chrome-path", type=Path, help="path to chrome.exe when auto-detection fails"
     )
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--split-only",
         action="store_true",
         help="refresh individual PDFs from the existing full set without rendering HTML",
+    )
+    mode.add_argument(
+        "--package-only",
+        action="store_true",
+        help="refresh the delivery ZIP without changing the individual PDFs",
     )
     args = parser.parse_args()
 
@@ -178,9 +227,15 @@ def main() -> None:
             load_program_names(),
             config.PROGRAM_BRIEFS_DIR,
         )
+        archive = create_delivery_archive(outputs)
+    elif args.package_only:
+        outputs = current_program_briefs(load_program_names())
+        archive = create_delivery_archive(outputs)
     else:
         outputs = build_from_html(args.source_html, args.chrome_path)
+        archive = config.PROGRAM_BRIEFS_ARCHIVE_PATH
     print(f"Synchronized {len(outputs)} program briefs in {config.PROGRAM_BRIEFS_DIR}")
+    print(f"Created delivery archive: {archive}")
 
 
 if __name__ == "__main__":

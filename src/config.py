@@ -8,9 +8,12 @@ TEMPLATES_DIR = PROJECT_ROOT / "templates"
 LOG_DIR = PROJECT_ROOT / "logs"
 PROGRAM_INVENTORY_PATH = PROJECT_ROOT / "program_inventory.csv"
 PROGRAM_CIP_MAP_PATH = PROJECT_ROOT / "program_cip_map.csv"
-PROGRAM_BRIEFS_TEMPLATE_PATH = TEMPLATES_DIR / "AU_Program_Briefs_All_81_printable.html"
+PROGRAM_BRIEFS_TEMPLATE_PATH = TEMPLATES_DIR / "AU_Program_Briefs_All_printable.html"
 PROGRAM_BRIEFS_FULL_SET_PATH = OUTPUT_DIR / "Program Labor-Market Briefs — Full Set.pdf"
 PROGRAM_BRIEFS_DIR = OUTPUT_DIR / "program-labor-market-briefs"
+PROGRAM_BRIEFS_ARCHIVE_PATH = (
+    OUTPUT_DIR / "Program Labor-Market Briefs - Individual PDFs.zip"
+)
 
 for _d in (RAW_DIR, PROCESSED_DIR, OUTPUT_DIR, LOG_DIR):
     _d.mkdir(parents=True, exist_ok=True)
