@@ -3,10 +3,9 @@
 Reads the program one-pager workbook produced by the pipeline
 (``au_program_onepager_data_<date>.xlsx``) and emits one record per program in the
 exact shape the recovered ``op2-brief`` component consumes. The field derivations
-here are pinned against the 81 records already baked into the committed bundle
-(see tests/test_brief_data.py), so any program the workbook covers, including the
-two non-offered fields added in this pass, is rendered identically to
-the existing set.
+here are pinned against the records already baked into the committed bundle
+(see tests/test_brief_data.py), so any program the workbook covers is rendered
+identically to the existing set.
 """
 
 import math

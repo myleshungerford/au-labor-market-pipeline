@@ -19,6 +19,9 @@ Active Programs by CIP.xlsx
 # Local session notes (e.g. goodnight handoffs); not part of the public deliverable
 handoffs/
 
+# Local Claude harness config; not part of the public deliverable
+.claude/
+
 # Internal email drafts; not part of the public deliverable
 email_drafts/
 

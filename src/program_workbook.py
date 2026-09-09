@@ -377,4 +377,8 @@ def program_methodology():
             "Non-offered fields (one-off)",
             "program_id hp_ppol (Public Policy, CIP 44.0501) and hp_padm (Public Administration, CIP 44.0401) were added 2026-08-28 as illustrative fields (not current AU undergraduate majors). American University offers neither as an undergraduate major, so both carry zero IPEDS bachelor's awards; their labor-market figures are national/DC-metro CIP data like any other program. See docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md.",
         ),
+        (
+            "Track-level brief (one-off)",
+            "program_id trk_crwr (Creative Writing, CIP 23.1302) was added 2026-09-09. Creative Writing is a track within the Literature (BA), not a separately reported major, so AU files no first-major bachelor's completions under CIP 23.1302 and the row carries zero reported awards; its labor-market figures are national/DC-metro CIP data like any other program. CIP 23.1302 has four SOC crosswalk matches, one of which is a residual 'All Other' code that the display rule surfaces rather than hides because the CIP has fewer than the minimum number of non-catch-all occupations. See docs/superpowers/specs/2026-09-09-creative-writing-brief-design.md.",
+        ),
     ]

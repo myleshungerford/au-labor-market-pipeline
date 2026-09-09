@@ -9,8 +9,8 @@ JavaScript array inside one of those assets.
 
 This module reads that array back out (``extract_programs2``) and writes new
 records into it in place (``splice_programs2``) without disturbing any other asset,
-so two hypothetical programs can be added to the existing 81 without rebuilding the
-whole bundle from source.
+so a program can be added to the existing set without rebuilding the whole bundle
+from source.
 """
 
 import base64
@@ -94,7 +94,8 @@ def splice_programs2(
 
     The existing records are preserved verbatim (the new ones are inserted just before
     the array's closing bracket) and every other asset in the manifest is untouched, so
-    the 81 committed briefs render exactly as before and only the additions are new.
+    every already-committed brief renders exactly as before and only the additions
+    are new.
     """
     html = Path(template_path).read_text(encoding="utf-8")
     match = _MANIFEST_RE.search(html)

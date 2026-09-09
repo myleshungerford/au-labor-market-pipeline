@@ -92,7 +92,8 @@ i.e. the rabbit hole above. Revisit only if the briefs ever need a genuine full 
 3. Add generator `src/brief_data.py`: workbook rows -> `PROGRAMS2` objects (recovered
    26-field + `occs[]` schema). Validate by reproducing a sample of the existing 81
    objects exactly against the recovered data, then emit the two new objects.
-4. Add scripted splice (`src/brief_bundle_patch.py`): parse the template HTML's
+4. Add scripted splice (`src/brief_bundle.py`, named `brief_bundle_patch.py` in this
+   plan): parse the template HTML's
    manifest, decompress the `PROGRAMS2` asset, append the two new objects (81 records
    untouched), recompress and re-embed, write the new self-contained HTML. Rename the
    template to a count-agnostic name and update the single `config` reference.

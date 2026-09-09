@@ -3,9 +3,10 @@
 Run after ``python -m src.run`` has refreshed the one-pager workbook. This regenerates
 each program's ``PROGRAMS2`` record from that workbook and inserts every program not
 already baked into the bundle, leaving the existing records and all other assets
-untouched. It is the repeatable, surgical path for adding programs (such as the two
-non-offered fields added in this pass) without rebuilding the whole bundle from
-source. See docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md.
+untouched. It is the repeatable, surgical path for adding programs without
+rebuilding the whole bundle from source. See
+docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md and
+docs/superpowers/specs/2026-09-09-creative-writing-brief-design.md.
 """
 
 import argparse
