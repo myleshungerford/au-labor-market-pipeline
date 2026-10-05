@@ -16,6 +16,10 @@ output/
 # Raw registrar export: internal/granular, not needed to reproduce (the cleaned CSVs are committed)
 Active Programs by CIP.xlsx
 
+# Brief print source: it embeds every brief's data and renders the full set, so it is kept
+# local rather than published. The methodology (code, specs, program CSVs) stays public.
+templates/AU_Program_Briefs_All_printable.html
+
 # Local session notes (e.g. goodnight handoffs); not part of the public deliverable
 handoffs/
 
@@ -29,3 +33,4 @@ email_drafts/
 Thumbs.db
 .DS_Store
 .Rhistory
+scratchpad/

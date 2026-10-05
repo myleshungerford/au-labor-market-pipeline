@@ -179,7 +179,9 @@ def test_verified_program_without_cip_labor_market_match_is_blocked():
 def test_lookup_loaders_validate_columns(tmp_path):
     inv = tmp_path / "program_inventory.csv"
     pd.DataFrame(columns=PROGRAM_INVENTORY_COLUMNS).to_csv(inv, index=False)
-    assert list(load_program_inventory(inv).columns) == PROGRAM_INVENTORY_COLUMNS
+    # An inventory without the optional brief_note column still loads, reading it blank.
+    loaded = load_program_inventory(inv)
+    assert list(loaded.columns) == PROGRAM_INVENTORY_COLUMNS + ["brief_note"]
 
     cip_map = tmp_path / "program_cip_map.csv"
     pd.DataFrame(columns=PROGRAM_CIP_MAP_COLUMNS).to_csv(cip_map, index=False)

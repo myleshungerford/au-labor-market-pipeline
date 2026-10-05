@@ -21,6 +21,10 @@ PROGRAM_INVENTORY_COLUMNS = [
     "program_name_verified",
     "program_notes",
 ]
+# Optional reader-facing sentence the brief prints under "How to read this". Optional
+# so an inventory regenerated from the master program list (which has no such column)
+# still loads; a missing column reads as blank.
+PROGRAM_INVENTORY_OPTIONAL_COLUMNS = ["brief_note"]
 
 PROGRAM_CIP_MAP_COLUMNS = [
     "program_id",
@@ -34,14 +38,18 @@ PROGRAM_CIP_MAP_COLUMNS = [
 ]
 
 
-def _read_lookup(path, columns):
+def _read_lookup(path, columns, optional=()):
     path = Path(path)
     if not path.exists():
-        return pd.DataFrame(columns=columns)
+        return pd.DataFrame(columns=columns + list(optional))
     df = pd.read_csv(path, dtype=str).fillna("")
     missing = set(columns) - set(df.columns)
     if missing:
         raise ValueError(f"{path.name} missing columns: {sorted(missing)}")
+    for col in optional:
+        if col not in df.columns:
+            df[col] = ""
+    columns = columns + list(optional)
     df = df[columns].copy()
     for col in columns:
         df[col] = df[col].astype(str).str.strip()
@@ -50,7 +58,9 @@ def _read_lookup(path, columns):
 
 def load_program_inventory(path=None) -> pd.DataFrame:
     path = config.PROGRAM_INVENTORY_PATH if path is None else path
-    return _read_lookup(path, PROGRAM_INVENTORY_COLUMNS)
+    return _read_lookup(
+        path, PROGRAM_INVENTORY_COLUMNS, PROGRAM_INVENTORY_OPTIONAL_COLUMNS
+    )
 
 
 def load_program_cip_map(path=None) -> pd.DataFrame:
@@ -380,5 +390,13 @@ def program_methodology():
         (
             "Track-level brief (one-off)",
             "program_id trk_crwr (Creative Writing, CIP 23.1302) was added 2026-09-09. Creative Writing is a track within the Literature (BA), not a separately reported major, so AU files no first-major bachelor's completions under CIP 23.1302 and the row carries zero reported awards; its labor-market figures are national/DC-metro CIP data like any other program. CIP 23.1302 has four SOC crosswalk matches, one of which is a residual 'All Other' code that the display rule surfaces rather than hides because the CIP has fewer than the minimum number of non-catch-all occupations. See docs/superpowers/specs/2026-09-09-creative-writing-brief-design.md.",
+        ),
+        (
+            "Minor-level brief (one-off)",
+            "program_id mn_ltst (Latinx Studies, CIP 05.0107) was added 2026-10-05 for the LTST minor. IPEDS Completions does not report minors, so its CIP map row carries an award share of 0 and CIP 05.0107's reported awards stay with ba_spla, which shares the CIP. Its labor-market figures are national/DC-metro CIP data like any other program. CIPs 05.0107, 05.0134, and 05.0203 each map to the single SOC 25-1062 in the crosswalk, so all three yield identical figures; the brief prints that via the inventory brief_note column. See docs/superpowers/specs/2026-10-05-latinx-studies-brief-design.md.",
+        ),
+        (
+            "Brief numbering",
+            "Brief numbers are frozen as of 2026-10-05: briefs 001-084 keep their alphabetical order from 2026-09-09 and each later brief is appended as the next number, so existing numbers never shift. Page order is the PROGRAMS2 array order in the briefs bundle.",
         ),
     ]

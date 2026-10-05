@@ -92,7 +92,7 @@ def _record(row: pd.Series, occ_rows: pd.DataFrame) -> dict:
     match = _flag(row["soc_match"])
     labor_cip_title = occs[0]["laborCipTitle"] if occs else ""
     single_teaching = displayed_count == 1 and occs[0]["soc"].startswith("25-")
-    return {
+    record = {
         "id": _text(row["program_id"]),
         "name": _text(row["program_name"]),
         "school": _text(row["school_college"]),
@@ -120,6 +120,12 @@ def _record(row: pd.Series, occ_rows: pd.DataFrame) -> dict:
         "singleTeaching": single_teaching,
         "occs": occs,
     }
+    # Optional reader-facing note (inventory ``brief_note``). Emitted only when set, so
+    # every record without one stays byte-identical to the shape already in the bundle.
+    note = _text(row.get("brief_note"))
+    if note:
+        record["note"] = note
+    return record
 
 
 def build_programs2(workbook_path: Path) -> list[dict]:

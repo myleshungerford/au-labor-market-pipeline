@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from src import config
 from src.program_briefs import load_program_names
 from src.brief_bundle import (
@@ -7,6 +9,11 @@ from src.brief_bundle import (
     _read_manifest,
     extract_programs2,
     splice_programs2,
+)
+
+pytestmark = pytest.mark.skipif(
+    not Path(config.PROGRAM_BRIEFS_TEMPLATE_PATH).is_file(),
+    reason="brief print source is kept local, not in the repository",
 )
 
 
@@ -17,6 +24,19 @@ def test_extract_programs2_returns_current_records_from_committed_bundle():
     by_id = {r["id"]: r for r in records}
     assert by_id["bs_acct"]["name"] == "Accounting (BS)"
     assert by_id["bs_acct"]["cip"] == "52.0301"
+
+
+def test_committed_shell_prints_array_order_with_frozen_numbering():
+    # Briefs 001-084 are frozen in their 2026-09-09 alphabetical order; later briefs
+    # are appended, so the shell must render the array as-is rather than re-sort it.
+    html = Path(config.PROGRAM_BRIEFS_TEMPLATE_PATH).read_text(encoding="utf-8")
+    assert "const ALL = [...window.PROGRAMS2];" in html
+    assert "localeCompare" not in html
+
+    names = [r["name"] for r in extract_programs2(config.PROGRAM_BRIEFS_TEMPLATE_PATH)]
+    assert names[:84] == sorted(names[:84], key=str.casefold)
+    assert names[0] == "Accounting (BS)"
+    assert names[83] == "Women's, Gender, and Sexuality Studies (BA)"
 
 
 def test_committed_bundle_includes_the_two_non_offered_fields():
@@ -43,6 +63,19 @@ def test_committed_bundle_includes_creative_writing():
     assert record["occCount"] == 4
     assert record["displayedCount"] == 4
     assert record["catchall"]
+
+
+def test_committed_bundle_appends_latinx_studies_as_brief_085():
+    records = extract_programs2(config.PROGRAM_BRIEFS_TEMPLATE_PATH)
+    record = records[84]
+    assert record["id"] == "mn_ltst"
+    assert record["name"] == "Latinx Studies"
+    assert record["cip"] == "05.0107"
+    assert record["match"] and record["ready"] and not record["isProxy"]
+    assert record["singleTeaching"] and [o["soc"] for o in record["occs"]] == ["25-1062"]
+    assert "05.0134" in record["note"] and "05.0203" in record["note"]
+    # The only record carrying a printed note.
+    assert [r["id"] for r in records if "note" in r] == ["mn_ltst"]
 
 
 def test_splice_appends_records_and_preserves_existing(tmp_path):

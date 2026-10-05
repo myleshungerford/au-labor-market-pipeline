@@ -36,7 +36,8 @@ python -m src.active_program_sources --clean-workbook output/active_programs_cle
 ## Program labor-market briefs
 
 `templates/AU_Program_Briefs_All_printable.html` is the print source for the
-full brief set. Keep corrections to the brief layout or copy in that file, then run:
+full brief set. It embeds every brief's data, so it is kept local and is not in this
+repository (as of 2026-10-05); the brief-building tests skip without it. Keep corrections to the brief layout or copy in that file, then run:
 
 ```
 python -m src.program_briefs
@@ -65,6 +66,14 @@ records and every other asset untouched. Run `python -m src.program_briefs`
 afterward to re-render the PDFs. See
 `docs/superpowers/specs/2026-08-28-hypothetical-program-briefs-design.md` for the
 design and the data-provenance rationale.
+
+Brief numbers are append-only: briefs 001-084 are frozen in their 2026-09-09
+alphabetical order and each new program prints as the next number (page order is the
+`PROGRAMS2` array order, so never re-sort it). An optional `brief_note` column in
+`program_inventory.csv` prints one extra "How to read this" line on that program's
+brief. Before adding a program, check its CIP's SOC rows in the crosswalk: many area and
+ethnic studies CIPs map only to `25-1062`, which gives figures identical to existing
+briefs. See `docs/superpowers/specs/2026-10-05-latinx-studies-brief-design.md`.
 
 ## Notes on data sources
 - National + DC-metro figures (wages, employment, national growth and openings) are the

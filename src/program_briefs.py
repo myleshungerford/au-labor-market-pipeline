@@ -18,6 +18,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from pypdf import PdfReader, PdfWriter
 
 from src import config
+from src.brief_bundle import extract_programs2
 
 
 class ProgramBriefsError(RuntimeError):
@@ -33,8 +34,19 @@ def safe_filename(value: str) -> str:
     return cleaned
 
 
-def load_program_names(inventory_path: Path = config.PROGRAM_INVENTORY_PATH) -> list[str]:
-    """Read the verified names in the same alphabetical order as the brief set."""
+def load_program_names(
+    inventory_path: Path = config.PROGRAM_INVENTORY_PATH,
+    template_path: Path = config.PROGRAM_BRIEFS_TEMPLATE_PATH,
+) -> list[str]:
+    """Return the verified names in the order the brief set prints them.
+
+    Page order is the bundle's ``PROGRAMS2`` array order, which the page shell renders
+    as-is: briefs 001-084 are frozen in their 2026-09-09 alphabetical order and each
+    later addition is appended, so existing brief numbers never shift. Reading the
+    order from the bundle (rather than re-sorting here) means the split cannot label
+    pages differently from how they were rendered. The inventory is the check that
+    the bundle covers exactly the verified programs.
+    """
     with inventory_path.open(newline="", encoding="utf-8-sig") as stream:
         rows = list(csv.DictReader(stream))
 
@@ -45,7 +57,16 @@ def load_program_names(inventory_path: Path = config.PROGRAM_INVENTORY_PATH) -> 
         )
     if len(names) != len(set(names)):
         raise ProgramBriefsError("Program inventory contains duplicate program names.")
-    return sorted(names, key=str.casefold)
+
+    ordered = [record["name"] for record in extract_programs2(template_path)]
+    if len(ordered) != len(set(ordered)) or set(ordered) != set(names):
+        raise ProgramBriefsError(
+            "Brief bundle and program inventory disagree. "
+            f"Only in bundle: {sorted(set(ordered) - set(names))}; "
+            f"only in inventory: {sorted(set(names) - set(ordered))}. "
+            "Run `python -m src.build_briefs_bundle` after `python -m src.run`."
+        )
+    return ordered
 
 
 def split_full_set(
@@ -76,9 +97,13 @@ def split_full_set(
                 writer.write(stream)
             outputs.append(output)
 
-        for staged_output, output in zip(sorted(staging.glob("*.pdf")), outputs, strict=True):
+        for staged_output, output in zip(
+            sorted(staging.glob("*.pdf")), outputs, strict=True
+        ):
             if len(PdfReader(staged_output).pages) != 1:
-                raise ProgramBriefsError(f"Invalid one-page output: {staged_output.name}")
+                raise ProgramBriefsError(
+                    f"Invalid one-page output: {staged_output.name}"
+                )
 
         destination.mkdir(exist_ok=True)
         expected = {output.name for output in outputs}
@@ -110,7 +135,9 @@ def create_delivery_archive(
     try:
         with ZipFile(staged_archive, "w", compression=ZIP_DEFLATED) as archive:
             for brief_path in sorted(brief_paths, key=lambda path: path.name):
-                archive.write(brief_path, arcname=f"{brief_path.parent.name}/{brief_path.name}")
+                archive.write(
+                    brief_path, arcname=f"{brief_path.parent.name}/{brief_path.name}"
+                )
         os.replace(staged_archive, archive_path)
     finally:
         staged_archive.unlink(missing_ok=True)
@@ -184,9 +211,11 @@ def build_from_html(
     inventory_path: Path = config.PROGRAM_INVENTORY_PATH,
 ) -> list[Path]:
     """Render the full set and synchronize every program PDF from the same render."""
-    program_names = load_program_names(inventory_path)
+    program_names = load_program_names(inventory_path, html_path)
     full_set_path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="program-briefs-build-", dir=full_set_path.parent) as temp_dir:
+    with tempfile.TemporaryDirectory(
+        prefix="program-briefs-build-", dir=full_set_path.parent
+    ) as temp_dir:
         rendered = Path(temp_dir) / full_set_path.name
         render_html_to_pdf(html_path, rendered, find_chrome(chrome_path))
         outputs = split_full_set(rendered, program_names, destination)

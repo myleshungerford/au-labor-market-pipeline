@@ -1,9 +1,13 @@
 import csv
 from zipfile import ZipFile
 
+import pytest
 from pypdf import PdfReader, PdfWriter
 
+from src import program_briefs
+
 from src.program_briefs import (
+    ProgramBriefsError,
     create_delivery_archive,
     load_program_names,
     safe_filename,
@@ -18,16 +22,38 @@ def test_safe_filename_preserves_readable_program_name():
     )
 
 
-def test_load_program_names_sorts_verified_inventory(tmp_path):
+def _write_inventory(tmp_path, names):
     inventory = tmp_path / "program_inventory.csv"
     with inventory.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=["program_name"])
         writer.writeheader()
-        writer.writerows(
-            [{"program_name": "Zoology (BS)"}, {"program_name": "Accounting (BS)"}]
-        )
+        writer.writerows([{"program_name": name} for name in names])
+    return inventory
 
-    assert load_program_names(inventory) == ["Accounting (BS)", "Zoology (BS)"]
+
+def test_load_program_names_follows_bundle_order_not_alphabetical(tmp_path, monkeypatch):
+    # An appended brief keeps its place at the end; nothing is re-sorted.
+    inventory = _write_inventory(tmp_path, ["Accounting (BS)", "Zoology (BS)"])
+    monkeypatch.setattr(
+        program_briefs,
+        "extract_programs2",
+        lambda _: [{"name": "Zoology (BS)"}, {"name": "Accounting (BS)"}],
+    )
+
+    assert load_program_names(inventory, tmp_path / "bundle.html") == [
+        "Zoology (BS)",
+        "Accounting (BS)",
+    ]
+
+
+def test_load_program_names_rejects_bundle_inventory_mismatch(tmp_path, monkeypatch):
+    inventory = _write_inventory(tmp_path, ["Accounting (BS)", "Zoology (BS)"])
+    monkeypatch.setattr(
+        program_briefs, "extract_programs2", lambda _: [{"name": "Accounting (BS)"}]
+    )
+
+    with pytest.raises(ProgramBriefsError, match="disagree"):
+        load_program_names(inventory, tmp_path / "bundle.html")
 
 
 def test_split_full_set_replaces_stale_files_with_one_page_per_program(tmp_path):

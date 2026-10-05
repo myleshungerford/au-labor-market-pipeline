@@ -1,8 +1,16 @@
 import glob
+from pathlib import Path
+
+import pytest
 
 from src import config
 from src.brief_bundle import extract_programs2
 from src.brief_data import build_programs2
+
+pytestmark = pytest.mark.skipif(
+    not Path(config.PROGRAM_BRIEFS_TEMPLATE_PATH).is_file(),
+    reason="brief print source is kept local, not in the repository",
+)
 
 
 def _latest_onepager_workbook():
